@@ -12,9 +12,9 @@
 
 5) добавьте Metrics Server (`kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`).
 
-6) настройте Horizontal Pod Autoscaler (HPA), чтобы масштабировать поды при увеличении нагрузки (kubectl autoscale deployment my-app --cpu-percent=50 --min=2 --max=5).
+6) настройте Horizontal Pod Autoscaler (HPA), чтобы масштабировать поды при увеличении нагрузки (`kubectl autoscale deployment my-app --cpu-percent=50 --min=2 --max=5`).
 
-7) настройте Prometheus и Grafana через (helm install prometheus prometheus-community/kube-prometheus-stack). Настройте дашборды в Grafana для мониторинга нагрузки (хотя бы один)
+7) настройте Prometheus и Grafana через (`helm install prometheus prometheus-community/kube-prometheus-stack`). Настройте дашборды в Grafana для мониторинга нагрузки (хотя бы один)
 
 # Инструкция
 
