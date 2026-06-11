@@ -95,37 +95,11 @@ mkdir my-k8s-app && cd my-k8s-app
 
 ### 3.2. Создание исходного кода приложения (`app.py`)
 
-Выполняем команду `nano app.py` и вставляем следующий код:
-
-```python
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import os
-
-class MyHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html; charset=utf-8')
-        self.end_headers()
-        # Возвращает имя пода, чтобы мы видели работу балансировщика
-        pod_name = os.getenv('POD_NAME', 'Unknown Pod')
-        self.wfile.write(f"<h1>Привет из Kubernetes!</h1><p>Привет от пода: {pod_name}</p>".encode())
-
-server = HTTPServer(('0.0.0.0', 8080), MyHandler)
-print("Сервер запущен на порту 8080...")
-server.serve_forever()
-```
+Выполняем команду `nano app.py` и вставляем код (см. файл `app.py`)
 
 ### 3.3. Создание спецификации сборки (`Dockerfile`)
 
-Выполняем команду `nano Dockerfile` и вставляем конфигурацию:
-
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY app.py .
-EXPOSE 8080
-CMD ["python", "app.py"]
-```
+Выполняем команду `nano Dockerfile` и вставляем конфигурацию (см. файл `Dockerfile`)
 
 ### 3.4. Сборка образа
 
@@ -148,55 +122,8 @@ docker build -t my-app:v1 .
 
 ### 4.1. Создание манифеста (`deployment.yaml`)
 
-Выполняем команду `nano deployment.yaml`:
+Выполняем команду `nano deployment.yaml` и пишем манифест (см. файл `deployment.yaml`)
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  labels:
-    app: my-app
-spec:
-  replicas: 3 # Устанавливаем изначальное количество подов на 3 по заданию
-  selector:
-    matchLabels:
-      app: my-app
-  template:
-    metadata:
-      labels:
-        app: my-app
-    spec:
-      containers:
-      - name: python-app
-        image: my-app:v1
-        imagePullPolicy: Never # Строго указывает k8s брать локальный образ Minikube
-        ports:
-        - containerPort: 8080
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        resources: # Ограничения жизненно необходимы для расчёта метрик HPA!
-          requests:
-            cpu: "100m"
-          limits:
-            cpu: "200m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-service
-spec:
-  type: NodePort
-  selector:
-    app: my-app
-  ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30080
-```
 
 ### 4.2. Применение конфигурации в кластере
 
@@ -254,10 +181,11 @@ kubectl autoscale deployment my-app --cpu-percent=50 --min=2 --max=5
 kubectl get hpa
 ```
 
-Спустя пару минут в колонке `TARGETS` значение должно измениться с `<unknown>/50%` на стабильные `0%/50%`.
+Спустя пару минут в колонке `TARGETS` значение должно измениться с `<unknown>/50%` на `1%/50%`.
 
 ### Cкриншоты
 <img width="1502" height="205" alt="image" src="https://github.com/user-attachments/assets/6b1987c3-0266-4fc0-8ab2-c262d6e796b4" />
+<img width="1554" height="71" alt="image" src="https://github.com/user-attachments/assets/44097c8e-2fea-47e6-97ba-88012ac112f2" />
 
 ---
 
@@ -278,7 +206,8 @@ helm repo update
 helm install prometheus prometheus-community/kube-prometheus-stack
 ```
 
-Установка занимает 1–2 минуты. Убеждаемся в стабильности запуска всех служебных системных подов командой `kubectl get pods`.
+Убеждаемся в стабильности запуска всех служебных системных подов с помощью команды `kubectl get pods`.
+
 
 ### 6.3. Доступ к Grafana из Windows (Port Forwarding)
 
@@ -294,35 +223,31 @@ kubectl port-forward svc/prometheus-grafana 3000:80
 
 ### 6.4. Вход в панель управления
 
-Открываем любой браузер внутри основной ОС Windows и переходим по адресу:
+Открываем браузер внутри основной ОС Windows и переходим по адресу:
 
 - **URL:** http://localhost:3000 (или http://127.0.0.1:3000)
 - **Логин:** `admin`
-- **Пароль по умолчанию:** `prom-operator`
-
-Если пароль не подходит, в новом окне терминала WSL выполняем декодирование секрета:
+- **Пароль:** чтобы найти пароль, в новом окне терминала WSL пишем:
 
 ```bash
 kubectl get secret prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
 ```
 
-### 6.5. Импорт интерактивного дашборда
+### 6.5. Добавление дашборда
 
-1. В левом меню Grafana переходим в **Dashboards → New → Import**.
-2. В поле «Import via grafana.com» указываем ID: `15760` (Kubernetes Views / Global) или `8588` (для отслеживания Workloads).
-3. Нажимаем **Load**.
-4. В нижней графе **Prometheus** выбираем единственный подключенный Data Source.
-5. Нажимаем **Import**.
+В Grafana можно импортировать дашборт по ID. Для этого в левом меню  переходим в **Dashboards → New → Import**. В поле «Import via grafana.com» указываем ID: `15760` (Kubernetes Views / Global) или `8588` (для отслеживания Workloads).
+
+### Cкриншоты
+<img width="1406" height="754" alt="image" src="https://github.com/user-attachments/assets/6381e85c-94b3-4dbb-a3b5-c42b2911f743" />
+<img width="1407" height="732" alt="image" src="https://github.com/user-attachments/assets/bd621bdc-9a8f-4297-a412-aaf2090e492d" />
 
 ---
 
 ## Шаг 7: Проведение нагрузочного тестирования
 
-Чтобы наглядно зафиксировать пики нагрузки в Grafana и процесс масштабирования подов в консоли, запускаем нагрузочный тест.
-
 ### Изолированный запуск нагрузки изнутри кластера (рекомендуется для WSL)
 
-Так как сеть WSL изолирована, запускаем симуляцию запросов из контейнера-соседа. Создаём временный под и проваливаемся в его консоль:
+Так как сеть WSL изолирована, запускаем симуляцию запросов из контейнера-соседа. Создаём временный под и попадаем в его консоль:
 
 ```bash
 kubectl run test-load --rm -it --image=busybox -- /bin/sh
@@ -331,13 +256,27 @@ kubectl run test-load --rm -it --image=busybox -- /bin/sh
 Внутри открывшейся командной строки контейнера (`/ #`) вводим бесконечный цикл запросов на внутренний CLUSTER-IP сервиса (узнать его можно командой `kubectl get svc`):
 
 ```bash
-while true; do wget -q -O- http://<ТВОЙ_CLUSTER_IP>:8080; done
+while true; do wget -q -O- http://<CLUSTER_IP>:8080; done
 ```
 
-В параллельных окнах терминала WSL наблюдаем динамику:
+В параллельных окнах терминала WSL можно выполнить следующие команды, чтобы посмотреть, что происходит с подами:
 
 - `kubectl get hpa -w` — фиксирует скачок нагрузки процессора (например, `103%/50%`).
-- `kubectl get pods -w` — показывает автоматическое создание новых подов вплоть до 5 штук.
-- В Grafana на импортированном дашборде отображаются графики пиков CPU и сети.
+- `kubectl get pods -w` — показывает автоматическое создание новых подов.
 
-По окончании теста нажимаем `Ctrl + C` в окне busybox и вводим `exit` — под автоматически удалится. Кластер плавно проведёт демасштабирование (scale down) обратно до изначального уровня.
+По окончании теста нажимаем `Ctrl + C`. Кластер плавно проведёт демасштабирование.
+
+### Cкриншоты
+
+`увеличение нагрузки`
+
+<img width="1411" height="316" alt="image" src="https://github.com/user-attachments/assets/2742c8cf-44a3-48fb-a03b-e6a101651042" />
+<img width="1455" height="558" alt="image" src="https://github.com/user-attachments/assets/8bd77c3a-3aee-4185-a7b1-6ddd77aa08b8" />
+
+`снижение нагрузки`
+
+<img width="1485" height="229" alt="image" src="https://github.com/user-attachments/assets/bfdb9da9-8024-44c3-827b-7d6899734cec" />
+<img width="1514" height="264" alt="image" src="https://github.com/user-attachments/assets/5c8a3b9a-5def-4626-ae54-ff4efae31f65" />
+
+
+
