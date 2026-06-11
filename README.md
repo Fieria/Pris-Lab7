@@ -10,7 +10,7 @@
 
 4) установить кол-во подов на 3
 
-5) добавьте Metrics Server (kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml).
+5) добавьте Metrics Server (`kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`).
 
 6) настройте Horizontal Pod Autoscaler (HPA), чтобы масштабировать поды при увеличении нагрузки (kubectl autoscale deployment my-app --cpu-percent=50 --min=2 --max=5).
 
