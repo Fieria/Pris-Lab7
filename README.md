@@ -16,11 +16,15 @@
 
 7) настройте Prometheus и Grafana через (`helm install prometheus prometheus-community/kube-prometheus-stack`). Настройте дашборды в Grafana для мониторинга нагрузки (хотя бы один)
 
+
+# Ссылка на видео-демонстрацию
+https://drive.google.com/file/d/1XC42x6UZD7oZnz3bEVZ2IiPxdfzNgmDY/view?usp=sharing
+
+
 # Инструкция
 
 > *работа выполнялась в окружении WSL2*
 
----
 
 ## Шаг 1: Подготовка окружения и установка инструментов
 
